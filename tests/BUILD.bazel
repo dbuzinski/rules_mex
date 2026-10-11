@@ -1,0 +1,7 @@
+load("//mex:mex.bzl", "mex_function")
+
+mex_function(
+    name = "yprime",
+    srcs = ["yprime.c"],
+)
+

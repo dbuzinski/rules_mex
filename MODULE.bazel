@@ -1,0 +1,6 @@
+"""Bazel rule for building C/C++ MEX functions."""
+
+module(
+    name = "rules_mex",
+    version = "0.0.0",
+)
