@@ -1,11 +1,9 @@
-# load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cpp_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc:action_names.bzl", "C_COMPILE_ACTION_NAME")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
-DISABLED_FEATURES = [
-    # "module_maps",  # copybara-comment-this-out-please
-]
+DISABLED_FEATURES = []
 
 def _mex_function_impl(ctx):
     src = ctx.files.srcs[0]
@@ -13,11 +11,10 @@ def _mex_function_impl(ctx):
     name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
     # TODO use toolchain to determine mexext
     out = ctx.actions.declare_file(name + ".mexmaca64")
-    scratch = ctx.actions.declare_directory(ctx.label.name + "_mex_scratch")
+    scratch = ctx.actions.declare_directory("mex_scratch")
     # TODO PATH management via toolchain
     # path = "/usr/local/bin:/usr/bin:/bin:/Applications/MATLAB_R2026b.app/bin"
 
-    # TODO use template script pattern from cc_rules
     # TODO reconsider use of -outdir. currently using as easiest to allow
     # sandboxed builds due to tmp file creation
     cc_toolchain = find_cpp_toolchain(ctx)
@@ -31,17 +28,22 @@ def _mex_function_impl(ctx):
         feature_configuration = feature_configuration,
         action_name = C_COMPILE_ACTION_NAME,
     )
-    ctx.actions.run_shell(
-        inputs = ctx.files.srcs,
+
+    mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
+    ctx.actions.expand_template(
+        template = ctx.file._template,
+        output = mex_wrapper,
+        substitutions = {
+            "{SCRATCH_DIR}": scratch.path,
+            "{CC_PATH}": c_compiler_path
+        },
+        is_executable = True,
+    )
+
+    ctx.actions.run(
+        inputs = ctx.files.srcs + [mex_wrapper],
         outputs = [out, scratch],
-        command = """
-set -euo pipefail
-export TMPDIR="$PWD/{scratch}"
-export MATLAB_PREFDIR="$TMPDIR/prefs"
-export PATH="$PATH:{c_compiler_path}"
-mkdir -p "$MATLAB_PREFDIR"
-exec /Applications/MATLAB_R2026b.app/bin/mex "$@"
-""".format(scratch = scratch.path, c_compiler_path = c_compiler_path),
+        executable = mex_wrapper.path,
         arguments = [f.path for f in ctx.files.srcs] + [
             "-outdir", out.dirname, "-output", name,
         ],
@@ -51,7 +53,12 @@ exec /Applications/MATLAB_R2026b.app/bin/mex "$@"
 mex_function = rule(
     implementation = _mex_function_impl,
     attrs = {
+        # TODO get more complete list
         "srcs": attr.label_list(allow_files = [".c", ".cc", ".cpp", ".c++"]),
+        "_template": attr.label(
+            default = ":mex_wrapper.sh.tpl",
+            allow_single_file = True,
+        ),
     } | CC_TOOLCHAIN_ATTRS,
     toolchains = use_cc_toolchain(),
     fragments = ["cpp"],
