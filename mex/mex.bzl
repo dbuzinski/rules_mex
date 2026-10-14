@@ -1,23 +1,32 @@
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
-
 def _mex_function_impl(ctx):
-    # Extract the path without its current extension, then add the new one
-    base_path = ctx.files.srcs[0].basename
-    if ctx.files.srcs[0].extension:
-        base_path = base_path[:-len("." + ctx.files.srcs[0].extension)]
+    src = ctx.files.srcs[0]
+    # TODO clean up file naming logic. Allow custom naming via attr
+    name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
+    # TODO use toolchain to determine mexext
+    out = ctx.actions.declare_file(name + ".mexmaca64")
+    scratch = ctx.actions.declare_directory(ctx.label.name + "_mex_scratch")
+    # TODO PATH management via toolchain
+    path = "/usr/local/bin:/usr/bin:/bin:/Applications/MATLAB_R2026b.app/bin"
 
-    out = ctx.actions.declare_file(base_path + ".mexmaca64")
-    source_paths = [f.path for f in ctx.files.srcs]
-    cc_toolchain = find_cpp_toolchain(ctx)
-    inputs = depset(
-        direct = ctx.files.srcs,
-        transitive = [cc_toolchain.all_files],
-    )
-    ctx.actions.run(
-        executable = "/Applications/MATLAB_R2026b.app/bin/mex",
-        inputs = inputs,
-        outputs = [out],
-        arguments = source_paths + ["-output", out.path],
+    # TODO use template script pattern from cc_rules
+    # TODO reconsider use of -outdir. currently using as easiest to allow
+    # sandboxed builds due to tmp file creation
+    ctx.actions.run_shell(
+        inputs = ctx.files.srcs,
+        outputs = [out, scratch],
+        env = {
+            "PATH": path
+        },
+        command = """
+set -euo pipefail
+export TMPDIR="$PWD/{scratch}"
+export MATLAB_PREFDIR="$TMPDIR/prefs"
+mkdir -p "$MATLAB_PREFDIR"
+exec mex "$@"
+""".format(scratch = scratch.path),
+        arguments = [f.path for f in ctx.files.srcs] + [
+            "-outdir", out.dirname, "-output", name,
+        ],
     )
     return [DefaultInfo(files = depset([out]))]
 
@@ -26,8 +35,4 @@ mex_function = rule(
     attrs = {
         "srcs": attr.label_list(allow_files = [".c", ".cc", ".cpp", ".c++"]),
     },
-    toolchains = [
-        "@bazel_tools//tools/cpp:toolchain_type", 
-    ],
 )
-
