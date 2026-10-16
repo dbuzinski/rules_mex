@@ -17,16 +17,18 @@ def get_arch(repository_ctx):
     fail("Unsupported Platform: " + os_name + " " + arch)
 
 def _matlab_configure_impl(repository_ctx):
+    arch = get_arch(repository_ctx)
     matlab_path = repository_ctx.which("matlab")
     mex_path = repository_ctx.which("mex")
     matlab_exe = str(matlab_path).replace("\\", "/") if matlab_path else ""
     mex_exe = str(mex_path).replace("\\", "/") if mex_path else ""
-    mexext = _MEXEXT[get_arch(repository_ctx)]
+    mexext = _MEXEXT[arch]
 
     repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
         "%{name}": "local",
         "%{matlab_root}": "",
         "%{matlab_executable}": matlab_exe,
+        "%{arch}": arch,
         "%{mex_executable}": mex_exe,
         "%{mexext}": mexext,
     }, executable = False)

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-export TMPDIR="$PWD/{SCRATCH_DIR}"
+export TMPDIR="$PWD/%{scratch_dir}"
 export MATLAB_PREFDIR="$TMPDIR/prefs"
-export PATH="{CC_PATH}:$PATH"
+export PATH="%{cc_path}:$PATH"
 
 mkdir -p "$MATLAB_PREFDIR"
 
-exec "{MEX_EXE}" "$@"
+exec "%{mex_exe}" "$@"

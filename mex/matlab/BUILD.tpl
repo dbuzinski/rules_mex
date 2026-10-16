@@ -7,6 +7,7 @@ matlab_toolchain(
     name = "matlab-%{name}",
     matlab_root = "%{matlab_root}",
     matlab_executable = "%{matlab_executable}",
+    arch = "%{arch}",
     mex_executable = "%{mex_executable}",
     mexext = "%{mexext}",
 )

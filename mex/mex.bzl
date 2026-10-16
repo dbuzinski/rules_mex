@@ -9,15 +9,13 @@ _MATLAB_TC_TYPE = Label("//mex/matlab:toolchain_type")
 def _mex_function_impl(ctx):
     matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
 
-    src = ctx.files.srcs[0]
     # TODO clean up file naming logic. Allow custom naming via attr
+    src = ctx.files.srcs[0]
     name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
     mexext = matlab_toolchain.mexext
     out = ctx.actions.declare_file(name + "." + mexext)
     scratch = ctx.actions.declare_directory("mex_scratch")
 
-    # TODO reconsider use of -outdir. currently using as easiest to allow
-    # sandboxed builds due to tmp file creation
     cc_toolchain = find_cpp_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
@@ -30,18 +28,26 @@ def _mex_function_impl(ctx):
         action_name = C_COMPILE_ACTION_NAME,
     )
 
-    mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
+    if matlab_toolchain.arch == "win64":
+        mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_windows
+        mex_wrapper = ctx.actions.declare_file("mex_wrapper.bat")
+    else:
+        mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
+        mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
+
     ctx.actions.expand_template(
-        template = ctx.file._template,
+        template = mex_wrapper_tpl,
         output = mex_wrapper,
         substitutions = {
-            "{MEX_EXE}": matlab_toolchain.mex_executable,
-            "{SCRATCH_DIR}": scratch.path,
-            "{CC_PATH}": c_compiler_path,
+            "%{mex_exe}": matlab_toolchain.mex_executable,
+            "%{scratch_dir}": scratch.path,
+            "%{cc_path}": c_compiler_path,
         },
         is_executable = True,
     )
 
+    # TODO reconsider use of -outdir. currently using as easiest to allow
+    # sandboxed builds due to tmp file creation
     ctx.actions.run(
         inputs = ctx.files.srcs + [mex_wrapper],
         outputs = [out, scratch],
@@ -55,10 +61,13 @@ def _mex_function_impl(ctx):
 mex_function = rule(
     implementation = _mex_function_impl,
     attrs = {
-        # TODO get more complete list
-        "srcs": attr.label_list(allow_files = [".c", ".cc", ".cpp", ".c++"]),
-        "_template": attr.label(
-            default = ":mex_wrapper.sh.tpl",
+        "srcs": attr.label_list(allow_files = True),
+        "_mex_wrapper_tpl_unix": attr.label(
+            default = ":mex_wrapper_tpl_unix",
+            allow_single_file = True,
+        ),
+        "_mex_wrapper_tpl_windows": attr.label(
+            default = ":mex_wrapper_tpl_windows",
             allow_single_file = True,
         ),
     } | CC_TOOLCHAIN_ATTRS,
