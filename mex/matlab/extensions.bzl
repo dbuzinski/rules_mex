@@ -18,8 +18,12 @@ def get_arch(repository_ctx):
 
 def _matlab_configure_impl(repository_ctx):
     arch = get_arch(repository_ctx)
-    matlab_path = repository_ctx.which("matlab")
-    mex_path = repository_ctx.which("mex")
+    if arch == "win64":
+        matlab_path = repository_ctx.which("matlab.exe")
+        mex_path = repository_ctx.which("mex.exe")
+    else:
+        matlab_path = repository_ctx.which("matlab")
+        mex_path = repository_ctx.which("mex")
     matlab_exe = str(matlab_path).replace("\\", "/") if matlab_path else ""
     mex_exe = str(mex_path).replace("\\", "/") if mex_path else ""
     mexext = _MEXEXT[arch]
