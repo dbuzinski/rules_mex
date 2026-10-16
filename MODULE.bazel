@@ -14,5 +14,4 @@ use_repo(matlab_configure, "local_config_matlab")
 
 register_toolchains(
     "@local_config_matlab//:all",
-    # "//cc/private/toolchain/test:default_test_runner_toolchain",
 )

@@ -16,16 +16,17 @@ def get_arch(repository_ctx):
         return "win64"
     fail("Unsupported Platform: " + os_name + " " + arch)
 
+def which(repository_ctx, cmd, default = None):
+    result = repository_ctx.which(cmd)
+    return default if result == None else str(result)
+
 def _matlab_configure_impl(repository_ctx):
     arch = get_arch(repository_ctx)
+    mex_cmd = "mex"
     if arch == "win64":
-        matlab_path = repository_ctx.which("matlab.exe")
-        mex_path = repository_ctx.which("mex.bat")
-        matlab_exe = str(matlab_path).replace("\\", "/") if matlab_path else ""
-        mex_exe = str(mex_path).replace("\\", "/") if mex_path else ""
-    else:
-        matlab_exe = repository_ctx.which("matlab")
-        mex_exe = repository_ctx.which("mex")
+        mex_cmd = mex_cmd + ".bat"
+    matlab_exe = which(repository_ctx, "matlab")
+    mex_exe = which(repository_ctx, mex_cmd)
     mexext = _MEXEXT[arch]
 
     repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
