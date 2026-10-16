@@ -10,10 +10,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+      - name: Install supported compiler for Windows
+        if: matrix.os == 'windows-latest'
+        uses: egor-tensin/setup-mingw@v3
+        with:
+          platform: x64
       - uses: bazel-contrib/setup-bazel@0.19.0
       - uses: matlab-actions/setup-matlab@v3
       - name: Build all targets
-        run: "bazel build //..."
+        run: 'bazel build //...'
       - name: Verify MEX output
         uses: matlab-actions/run-command@v3
         with:
