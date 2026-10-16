@@ -7,3 +7,12 @@ module(
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_cc", version = "0.2.26")
+bazel_dep(name = "platforms", version = "1.1.0")
+
+matlab_configure = use_extension("//mex/matlab:extensions.bzl", "matlab_configure_extension")
+use_repo(matlab_configure, "local_config_matlab")
+
+register_toolchains(
+    "@local_config_matlab//:all",
+    # "//cc/private/toolchain/test:default_test_runner_toolchain",
+)

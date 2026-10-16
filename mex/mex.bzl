@@ -4,16 +4,17 @@ load("@rules_cc//cc:action_names.bzl", "C_COMPILE_ACTION_NAME")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
 DISABLED_FEATURES = []
+_MATLAB_TC_TYPE = Label("//mex/matlab:toolchain_type")
 
 def _mex_function_impl(ctx):
+    matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
+
     src = ctx.files.srcs[0]
     # TODO clean up file naming logic. Allow custom naming via attr
     name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
-    # TODO use toolchain to determine mexext
-    out = ctx.actions.declare_file(name + ".mexmaca64")
+    mexext = matlab_toolchain.mexext
+    out = ctx.actions.declare_file(name + "." + mexext)
     scratch = ctx.actions.declare_directory("mex_scratch")
-    # TODO PATH management via toolchain
-    # path = "/usr/local/bin:/usr/bin:/bin:/Applications/MATLAB_R2026b.app/bin"
 
     # TODO reconsider use of -outdir. currently using as easiest to allow
     # sandboxed builds due to tmp file creation
@@ -34,8 +35,9 @@ def _mex_function_impl(ctx):
         template = ctx.file._template,
         output = mex_wrapper,
         substitutions = {
+            "{MEX_EXE}": matlab_toolchain.mex_executable,
             "{SCRATCH_DIR}": scratch.path,
-            "{CC_PATH}": c_compiler_path
+            "{CC_PATH}": c_compiler_path,
         },
         is_executable = True,
     )
@@ -60,6 +62,6 @@ mex_function = rule(
             allow_single_file = True,
         ),
     } | CC_TOOLCHAIN_ATTRS,
-    toolchains = use_cc_toolchain(),
+    toolchains = use_cc_toolchain() + [_MATLAB_TC_TYPE],
     fragments = ["cpp"],
 )

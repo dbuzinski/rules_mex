@@ -1,0 +1,8 @@
+package(default_visibility = ["//visibility:public"])
+
+toolchain_type(name = "toolchain_type", visibility = ["//visibility:public"])
+exports_files([
+    "BUILD.tpl",
+    "toolchain.bzl",
+    "extensions.bzl",
+])
