@@ -44,10 +44,6 @@ def _mex_function_impl(ctx):
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
 
-    print("Toolchain:")
-    print(cc_toolchain)
-    print("Env:")
-    print(env.keys())
     ctx.actions.expand_template(
         template = mex_wrapper_tpl,
         output = mex_wrapper,
