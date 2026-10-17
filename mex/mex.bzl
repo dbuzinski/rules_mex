@@ -14,9 +14,9 @@ def _mex_function_impl(ctx):
     name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
     mexext = matlab_toolchain.mexext
     out = ctx.actions.declare_file(name + "." + mexext)
-    scratch = ctx.actions.declare_directory("mex_scratch")
 
     cc_toolchain = find_cpp_toolchain(ctx)
+    action = C_COMPILE_ACTION_NAME
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
         cc_toolchain = cc_toolchain,
@@ -25,22 +25,37 @@ def _mex_function_impl(ctx):
     )
     c_compiler_path = cc_common.get_tool_for_action(
         feature_configuration = feature_configuration,
-        action_name = C_COMPILE_ACTION_NAME,
+        action_name = action,
+    )
+    variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+    )
+    cc_env = cc_common.get_environment_variables(
+        feature_configuration = feature_configuration,
+        action_name = action,
+        variables = variables,
     )
 
     if matlab_toolchain.arch == "win64":
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_windows
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.bat")
+        # Pass env vars to help mex locate compiler
+        _COMPILER_LOC_VARS = ["MW_MINGW64_LOC", "PROGRAMFILES(X86)", "PROGRAMFILES"]
+
+        shell_env = ctx.configuration.default_shell_env
+        env = {e: shell_env[e] for e in _COMPILER_LOC_VARS if e in shell_env}
+        env.update(cc_env)
     else:
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
+        env = cc_env
 
     ctx.actions.expand_template(
         template = mex_wrapper_tpl,
         output = mex_wrapper,
         substitutions = {
             "%{mex_exe}": matlab_toolchain.mex_executable,
-            "%{scratch_dir}": scratch.path,
             "%{cc_path}": c_compiler_path,
         },
         is_executable = True,
@@ -48,10 +63,12 @@ def _mex_function_impl(ctx):
 
     # TODO reconsider use of -outdir. currently using as easiest to allow
     # sandboxed builds due to tmp file creation
+    # TODO fix inputs. cc_toolchain.all_files? matlab_toolchain.all_files?
     ctx.actions.run(
         inputs = ctx.files.srcs + [mex_wrapper],
-        outputs = [out, scratch],
+        outputs = [out],
         executable = mex_wrapper.path,
+        env = env,
         arguments = [f.path for f in ctx.files.srcs] + [
             "-outdir", out.dirname, "-output", name,
         ],
