@@ -47,7 +47,7 @@ def _mex_function_impl(ctx):
     print("Toolchain:")
     print(cc_toolchain)
     print("Env:")
-    print(env)
+    print(env.keys())
     ctx.actions.expand_template(
         template = mex_wrapper_tpl,
         output = mex_wrapper,
