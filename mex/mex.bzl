@@ -31,7 +31,7 @@ def _mex_function_impl(ctx):
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
     )
-    env = cc_common.get_environment_variables(
+    cc_env = cc_common.get_environment_variables(
         feature_configuration = feature_configuration,
         action_name = action,
         variables = variables,
@@ -40,6 +40,12 @@ def _mex_function_impl(ctx):
     if matlab_toolchain.arch == "win64":
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_windows
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.bat")
+        # Pass env vars to help mex locate compiler
+        _COMPILER_LOC_VARS = ["MW_MINGW64_LOC", "PROGRAMFILES(X86)", "PROGRAMFILES"]
+
+        shell_env = ctx.configuration.default_shell_env
+        env = {k: shell_env[e] for e in _COMPILER_LOC_VARS if e in shell_env}
+        env.update(cc_env)
     else:
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
