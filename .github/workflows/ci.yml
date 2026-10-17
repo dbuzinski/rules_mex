@@ -12,10 +12,10 @@ jobs:
             action_env: 'NONE'
           - os: windows-latest
             compiler: mingw
-            action_env: 'MW_MINGW64_LOC="C:\ProgramData\mingw64\mingw64'
+            action_env: '"MW_MINGW64_LOC=C:\ProgramData\mingw64\mingw64"'
           - os: windows-latest
             compiler: mvsc
-            action_env: 'PROGRAMFILES(X86)="C:\ProgramFiles (x86)"'
+            action_env: '"PROGRAMFILES(X86)=C:\ProgramFiles (x86)"'
           - os: macos-latest
             compiler: xcode
             action_env: 'NONE'
