@@ -14,7 +14,6 @@ def _mex_function_impl(ctx):
     name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
     mexext = matlab_toolchain.mexext
     out = ctx.actions.declare_file(name + "." + mexext)
-    scratch = ctx.actions.declare_directory("mex_scratch")
 
     cc_toolchain = find_cpp_toolchain(ctx)
     action = C_COMPILE_ACTION_NAME
@@ -45,12 +44,15 @@ def _mex_function_impl(ctx):
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
 
+    print("Toolchain:")
+    print(cc_toolchain)
+    print("Env:")
+    print(env)
     ctx.actions.expand_template(
         template = mex_wrapper_tpl,
         output = mex_wrapper,
         substitutions = {
             "%{mex_exe}": matlab_toolchain.mex_executable,
-            "%{scratch_dir}": scratch.path,
             "%{cc_path}": c_compiler_path,
         },
         is_executable = True,
@@ -60,7 +62,7 @@ def _mex_function_impl(ctx):
     # sandboxed builds due to tmp file creation
     ctx.actions.run(
         inputs = ctx.files.srcs + [mex_wrapper],
-        outputs = [out, scratch],
+        outputs = [out],
         executable = mex_wrapper.path,
         env = env,
         arguments = [f.path for f in ctx.files.srcs] + [
