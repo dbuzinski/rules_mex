@@ -1,13 +1,13 @@
 name: Test on different platforms
 on: [push]
 jobs:
-  test:
+  test_windows:
     name: Test
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        compiler: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
       - name: Install supported compiler for Windows
@@ -21,6 +21,8 @@ jobs:
           # echo "MW_MINGW64_LOC=C:\ProgramData\mingw64\mingw64\bin" >> $GITHUB_OUTPUT
       - uses: bazel-contrib/setup-bazel@0.19.0
       - uses: matlab-actions/setup-matlab@v3
+        with:
+          cache: true
       - name: Build all targets
         run: 'bazel build //...'
       - name: Verify MEX output
