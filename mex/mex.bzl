@@ -63,6 +63,7 @@ def _mex_function_impl(ctx):
 
     # TODO reconsider use of -outdir. currently using as easiest to allow
     # sandboxed builds due to tmp file creation
+    # TODO fix inputs. cc_toolchain.all_files? matlab_toolchain.all_files?
     ctx.actions.run(
         inputs = ctx.files.srcs + [mex_wrapper],
         outputs = [out],

@@ -1,36 +1,40 @@
-name: Test on different platforms
+name: Smoke Tests
 on: [push]
 jobs:
-  test_windows:
-    name: Test
+  test:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: Ubuntu
             compiler: gcc
+            runs-on: ubuntu-latest
             action_env: 'NONE'
-          - os: windows-latest
-            compiler: mingw
+          - os: Windows
+            compiler: MinGW
+            runs-on: windows-latest
             action_env: '"MW_MINGW64_LOC=C:\ProgramData\mingw64\mingw64"'
-          - os: windows-latest
-            compiler: mvsc
+          - os: Windows
+            compiler: MSVC
+            runs-on: windows-latest
             action_env: '"PROGRAMFILES(X86)=C:\Program Files (x86)"'
-          - os: macos-latest
-            compiler: xcode
+          - os: macOS
+            compiler: Xcode
+            runs-on: macos-latest
             action_env: 'NONE'
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} - ${{ matrix.compiler }}
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v7
       - uses: egor-tensin/setup-mingw@v3
-        if: matrix.compiler == 'mingw'
+        if: matrix.compiler == 'MinGW'
       - uses: bazel-contrib/setup-bazel@0.19.0
       - uses: matlab-actions/setup-matlab@v3
         with:
           cache: true
       - name: Build all targets
         run: 'bazel build --action_env=${{ matrix.action_env }} //...'
-      - name: Verify MEX output
+      - name: Verify MEX function in MATLAB
         uses: matlab-actions/run-command@v3
         with:
           command: cd bazel-bin/tests; greetings
