@@ -7,4 +7,4 @@ mkdir -p "$MATLAB_PREFDIR"
 echo "%{cc_path}"
 export PATH="%{cc_path}:$PATH"
 
-exec "%{mex_exe}" -v "$@"
+exec "%{mex_exe}" "$@"

@@ -6,25 +6,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            action_env: 'NONE'
+          - os: windows-latest
+            compiler: mingw
+            action_env: 'MW_MINGW64_LOC="C:\ProgramData\mingw64\mingw64'
+          - os: windows-latest
+            compiler: mvsc
+            action_env: 'PROGRAMFILES(X86)="C:\ProgramFiles (x86)"'
+          - os: macos-latest
+            compiler: xcode
+            action_env: 'NONE'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-      - name: Install supported compiler for Windows
-        if: matrix.os == 'windows-latest'
-        id: setup-mingw
-        uses: egor-tensin/setup-mingw@v3
-      - name: Set MinGW location on Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-      - run: |
-          echo "MW_MINGW64_LOC=C:\ProgramData\mingw64\mingw64" >> $GITHUB_OUTPUT
+      - uses: egor-tensin/setup-mingw@v3
+        if: matrix.compiler == 'mingw'
       - uses: bazel-contrib/setup-bazel@0.19.0
       - uses: matlab-actions/setup-matlab@v3
         with:
           cache: true
       - name: Build all targets
-        run: 'bazel build --action_env=MW_MINGW64_LOC="C:\ProgramData\mingw64\mingw64" //...'
+        run: 'bazel build --action_env=${{ matrix.action_env }} //...'
       - name: Verify MEX output
         uses: matlab-actions/run-command@v3
         with:
