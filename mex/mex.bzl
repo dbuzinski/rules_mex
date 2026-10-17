@@ -17,6 +17,7 @@ def _mex_function_impl(ctx):
     scratch = ctx.actions.declare_directory("mex_scratch")
 
     cc_toolchain = find_cpp_toolchain(ctx)
+    action = C_COMPILE_ACTION_NAME
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
         cc_toolchain = cc_toolchain,
@@ -25,7 +26,16 @@ def _mex_function_impl(ctx):
     )
     c_compiler_path = cc_common.get_tool_for_action(
         feature_configuration = feature_configuration,
-        action_name = C_COMPILE_ACTION_NAME,
+        action_name = action,
+    )
+    variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+    )
+    env = cc_common.get_environment_variables(
+        feature_configuration = feature_configuration,
+        action_name = action,
+        variables = variables,
     )
 
     if matlab_toolchain.arch == "win64":
@@ -52,6 +62,7 @@ def _mex_function_impl(ctx):
         inputs = ctx.files.srcs + [mex_wrapper],
         outputs = [out, scratch],
         executable = mex_wrapper.path,
+        env = env,
         arguments = [f.path for f in ctx.files.srcs] + [
             "-outdir", out.dirname, "-output", name,
         ],

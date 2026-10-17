@@ -17,7 +17,8 @@ jobs:
       - name: Set MinGW location on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          echo "MW_MINGW64_LOC=C:\ProgramData\mingw64\mingw64\bin" >> $GITHUB_OUTPUT
+          gcc -v
+          # echo "MW_MINGW64_LOC=C:\ProgramData\mingw64\mingw64\bin" >> $GITHUB_OUTPUT
       - uses: bazel-contrib/setup-bazel@0.19.0
       - uses: matlab-actions/setup-matlab@v3
       - name: Build all targets
