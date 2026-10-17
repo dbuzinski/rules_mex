@@ -44,11 +44,12 @@ def _mex_function_impl(ctx):
         _COMPILER_LOC_VARS = ["MW_MINGW64_LOC", "PROGRAMFILES(X86)", "PROGRAMFILES"]
 
         shell_env = ctx.configuration.default_shell_env
-        env = {k: shell_env[e] for e in _COMPILER_LOC_VARS if e in shell_env}
+        env = {e: shell_env[e] for e in _COMPILER_LOC_VARS if e in shell_env}
         env.update(cc_env)
     else:
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
+        env = cc_env
 
     ctx.actions.expand_template(
         template = mex_wrapper_tpl,
