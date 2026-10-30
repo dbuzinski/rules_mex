@@ -4,4 +4,3 @@ mex_function(
     name = "greetings",
     srcs = ["greetings.c"],
 )
-

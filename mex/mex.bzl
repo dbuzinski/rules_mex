@@ -1,12 +1,14 @@
-load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
-load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cpp_toolchain", "use_cc_toolchain")
+"""This module defines the rule for building MEX functions."""
+
 load("@rules_cc//cc:action_names.bzl", "C_COMPILE_ACTION_NAME")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cpp_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
 DISABLED_FEATURES = []
 _MATLAB_TC_TYPE = Label("//mex/matlab:toolchain_type")
 
 def _mex_function_impl(ctx):
+    unused = "wtf"
     matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
 
     # TODO clean up file naming logic. Allow custom naming via attr
@@ -40,6 +42,7 @@ def _mex_function_impl(ctx):
     if matlab_toolchain.arch == "win64":
         mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_windows
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.bat")
+
         # Pass env vars to help mex locate compiler
         _COMPILER_LOC_VARS = ["MW_MINGW64_LOC", "PROGRAMFILES(X86)", "PROGRAMFILES"]
 
@@ -70,7 +73,10 @@ def _mex_function_impl(ctx):
         executable = mex_wrapper.path,
         env = env,
         arguments = [f.path for f in ctx.files.srcs] + [
-            "-outdir", out.dirname, "-output", name,
+            "-outdir",
+            out.dirname,
+            "-output",
+            name,
         ],
     )
     return [DefaultInfo(files = depset([out]))]

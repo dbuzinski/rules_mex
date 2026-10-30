@@ -1,6 +1,10 @@
 name: Smoke Tests
 on: [push]
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: bazel run //:buildifier.check
   test:
     strategy:
       fail-fast: false
