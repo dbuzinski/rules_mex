@@ -1,3 +1,5 @@
+"""This module defines the auto config for the MATLAB toolchain."""
+
 _MEXEXT = {
     "glnxa64": "mexa64",
     "win64": "mexw64",
@@ -5,7 +7,7 @@ _MEXEXT = {
     "maci64": "mexmaci64",
 }
 
-def get_arch(repository_ctx):
+def _get_arch(repository_ctx):
     os_name = repository_ctx.os.name
     arch = repository_ctx.os.arch
     if os_name.startswith("mac os"):
@@ -16,27 +18,36 @@ def get_arch(repository_ctx):
         return "win64"
     fail("Unsupported Platform: " + os_name + " " + arch)
 
-def which(repository_ctx, cmd, default = None):
+def _which(repository_ctx, cmd, default = None):
     result = repository_ctx.which(cmd)
     return default if result == None else str(result)
 
-def _matlab_configure_impl(repository_ctx):
-    arch = get_arch(repository_ctx)
-    mex_cmd = "mex"
-    if arch == "win64":
-        mex_cmd = mex_cmd + ".bat"
-    matlab_exe = which(repository_ctx, "matlab")
-    mex_exe = which(repository_ctx, mex_cmd)
-    mexext = _MEXEXT[arch]
+def _should_disable_toolchain(repository_ctx):
+    env = repository_ctx.os.environ
+    if env.get("BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN") == "1":
+        return True
+    return False
 
-    repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
-        "%{name}": "local",
-        "%{matlab_root}": "",
-        "%{matlab_executable}": matlab_exe,
-        "%{arch}": arch,
-        "%{mex_executable}": mex_exe,
-        "%{mexext}": mexext,
-    }, executable = False)
+def _matlab_configure_impl(repository_ctx):
+    if not _should_disable_toolchain(repository_ctx):
+        arch = _get_arch(repository_ctx)
+        mex_cmd = "mex"
+        if arch == "win64":
+            mex_cmd = mex_cmd + ".bat"
+        matlab_exe = _which(repository_ctx, "matlab")
+        mex_exe = _which(repository_ctx, mex_cmd)
+        mexext = _MEXEXT[arch]
+
+        repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
+            "%{name}": "local",
+            "%{matlab_root}": "",
+            "%{matlab_executable}": matlab_exe,
+            "%{arch}": arch,
+            "%{mex_executable}": mex_exe,
+            "%{mexext}": mexext,
+        }, executable = False)
+    else:
+        repository_ctx.file("BUILD", "# MATLAB toolchain autoconfiguration was disabled by BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN=1.")
 
 matlab_configure = repository_rule(
     implementation = _matlab_configure_impl,
@@ -46,7 +57,7 @@ matlab_configure = repository_rule(
     attrs = {"_build_tpl": attr.label(default = Label("//mex/matlab:BUILD.tpl"))},
 )
 
-def _matlab_configure_extension_impl(ctx):
+def _matlab_configure_extension_impl(_):
     matlab_configure(name = "local_config_matlab")
 
 matlab_configure_extension = module_extension(implementation = _matlab_configure_extension_impl)

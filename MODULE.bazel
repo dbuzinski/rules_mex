@@ -2,13 +2,18 @@
 
 module(
     name = "rules_mex",
-    version = "0.0.0",
+    version = "0.0.1",
 )
 
+# depencencies
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_cc", version = "0.2.26")
 bazel_dep(name = "platforms", version = "1.1.0")
 
+# dev depencencies
+bazel_dep(name = "buildifier_prebuilt", version = "10.1.0", dev_dependency = True)
+
+# local matlab discovery for auto tooolchain
 matlab_configure = use_extension("//mex/matlab:extensions.bzl", "matlab_configure_extension")
 use_repo(matlab_configure, "local_config_matlab")
 

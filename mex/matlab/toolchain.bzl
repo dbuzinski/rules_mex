@@ -1,3 +1,5 @@
+"""This module defines the MATLAB toolchain rule."""
+
 def _matlab_toolchain_impl(ctx):
     toolchain_info = platform_common.ToolchainInfo(
         matlab_root = ctx.attr.matlab_root,
@@ -16,5 +18,5 @@ matlab_toolchain = rule(
         "arch": attr.string(),
         "mex_executable": attr.string(),
         "mexext": attr.string(),
-    }
+    },
 )

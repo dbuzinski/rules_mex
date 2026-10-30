@@ -1,7 +1,16 @@
 name: Smoke Tests
 on: [push]
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: bazel-contrib/setup-bazel@0.19.0
+      - run: bazel run //:buildifier.check
+        env:
+          BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN: 1
   test:
+    needs: [lint]
     strategy:
       fail-fast: false
       matrix:
