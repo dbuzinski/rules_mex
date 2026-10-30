@@ -8,7 +8,6 @@ DISABLED_FEATURES = []
 _MATLAB_TC_TYPE = Label("//mex/matlab:toolchain_type")
 
 def _mex_function_impl(ctx):
-    unused = "wtf"
     matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
 
     # TODO clean up file naming logic. Allow custom naming via attr

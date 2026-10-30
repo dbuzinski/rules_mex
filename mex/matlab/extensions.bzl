@@ -22,7 +22,6 @@ def _which(repository_ctx, cmd, default = None):
     result = repository_ctx.which(cmd)
     return default if result == None else str(result)
 
-
 def _should_disable_toolchain(repository_ctx):
     env = repository_ctx.os.environ
     if env.get("BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN") == "1":
