@@ -1,10 +1,12 @@
 """This module defines the auto config for the MATLAB toolchain."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
+
 _MEXEXT = {
-    "glnxa64": "mexa64",
-    "win64": "mexw64",
-    "maca64": "mexmaca64",
-    "maci64": "mexmaci64",
+    "glnxa64": ".mexa64",
+    "win64": ".mexw64",
+    "maca64": ".mexmaca64",
+    "maci64": ".mexmaci64",
 }
 
 def _get_arch(repository_ctx):
@@ -31,16 +33,30 @@ def _should_disable_toolchain(repository_ctx):
 def _matlab_configure_impl(repository_ctx):
     if not _should_disable_toolchain(repository_ctx):
         arch = _get_arch(repository_ctx)
-        mex_cmd = "mex"
-        if arch == "win64":
-            mex_cmd = mex_cmd + ".bat"
-        matlab_exe = _which(repository_ctx, "matlab")
-        mex_exe = _which(repository_ctx, mex_cmd)
         mexext = _MEXEXT[arch]
+        matlab_root = repository_ctx.getenv("MATLAB_ROOT")
+
+        if matlab_root:
+            matlab_exe = paths.join(matlab_root, "bin", "matlab")
+            mex_exe = paths.join(matlab_root, "bin", "mex")
+            if arch == "win64":
+                mex_exe = paths.replace_extension(mex_exe, ".bat")
+            matlab_exe = str(matlab_exe)
+            mex_exe = str(mex_exe)
+        else:
+            mex_script = "mex"
+            if arch == "win64":
+                mex_script = mex_script + ".bat"
+            matlab_exe = _which(repository_ctx, "matlab")
+            mex_exe = _which(repository_ctx, mex_script)
+
+            if not matlab_exe or not mex_exe:
+                fail("Unable to find MATLAB toolchain.")
+            matlab_root = paths.dirname(paths.dirname(matlab_exe))
 
         repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
             "%{name}": "local",
-            "%{matlab_root}": "",
+            "%{matlab_root}": str(matlab_root),
             "%{matlab_executable}": matlab_exe,
             "%{arch}": arch,
             "%{mex_executable}": mex_exe,
@@ -51,7 +67,7 @@ def _matlab_configure_impl(repository_ctx):
 
 matlab_configure = repository_rule(
     implementation = _matlab_configure_impl,
-    environ = ["MATLAB_ROOT"],
+    environ = ["MATLAB_ROOT", "PATH"],
     local = True,
     configure = True,
     attrs = {"_build_tpl": attr.label(default = Label("//mex/matlab:BUILD.tpl"))},

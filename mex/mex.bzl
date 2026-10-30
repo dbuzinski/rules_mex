@@ -10,11 +10,20 @@ _MATLAB_TC_TYPE = Label("//mex/matlab:toolchain_type")
 def _mex_function_impl(ctx):
     matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
 
-    # TODO clean up file naming logic. Allow custom naming via attr
-    src = ctx.files.srcs[0]
-    name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
     mexext = matlab_toolchain.mexext
-    out = ctx.actions.declare_file(name + "." + mexext)
+    output = ctx.attr.output
+    if output:
+        ext_start = output.rfind(".")
+        if ext_start == -1:
+            output += mexext
+        else:
+            output = output.replace(output[ext_start:], mexext)
+        out = ctx.actions.declare_file(output)
+    else:
+        src = ctx.files.srcs[0]
+        name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
+        output = name + mexext
+        out = ctx.actions.declare_file(output)
 
     cc_toolchain = find_cpp_toolchain(ctx)
     action = C_COMPILE_ACTION_NAME
@@ -53,6 +62,7 @@ def _mex_function_impl(ctx):
         mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
         env = cc_env
 
+    # TODO: Probably shouldn't be an output that actually goes in bazel-bin
     ctx.actions.expand_template(
         template = mex_wrapper_tpl,
         output = mex_wrapper,
@@ -75,8 +85,8 @@ def _mex_function_impl(ctx):
             "-outdir",
             out.dirname,
             "-output",
-            name,
-        ],
+            output,
+        ] + ctx.attr.options,
     )
     return [DefaultInfo(files = depset([out]))]
 
@@ -84,6 +94,8 @@ mex_function = rule(
     implementation = _mex_function_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = True),
+        "output": attr.string(),
+        "options": attr.string_list(),
         "_mex_wrapper_tpl_unix": attr.label(
             default = ":mex_wrapper_tpl_unix",
             allow_single_file = True,

@@ -205,9 +205,11 @@
   "moduleExtensions": {
     "//mex/matlab:extensions.bzl%matlab_configure_extension": {
       "general": {
-        "bzlTransitiveDigest": "seWEUSd6OStClgOJOkMjqk+8qXIOIhF3PKdJhyGFxQs=",
+        "bzlTransitiveDigest": "o903BoFnmc8axoX/+1gkihnB2GbbczUgl0gMmY1w2hQ=",
         "usagesDigest": "/Te4HYVZwpyUXHBJQe+fY+l2ttN3dDROam8OC3QPjPc=",
-        "recordedInputs": [],
+        "recordedInputs": [
+          "REPO_MAPPING:,bazel_skylib bazel_skylib+"
+        ],
         "generatedRepoSpecs": {
           "local_config_matlab": {
             "repoRuleId": "@@//mex/matlab:extensions.bzl%matlab_configure",
