@@ -4,8 +4,11 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+      - uses: bazel-contrib/setup-bazel@0.19.0
       - run: bazel run //:buildifier.check
   test:
+    needs: [lint]
     strategy:
       fail-fast: false
       matrix:
