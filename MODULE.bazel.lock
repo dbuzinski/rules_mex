@@ -205,7 +205,7 @@
   "moduleExtensions": {
     "//mex/matlab:extensions.bzl%matlab_configure_extension": {
       "general": {
-        "bzlTransitiveDigest": "wSCMVyv83vIG3O5eiNfDsjJZKr3uerd+9UpR2aVhUE0=",
+        "bzlTransitiveDigest": "mk9KEOzYT5SsBEex4PlabC4/lbP/v64ItcUyrGx38wA=",
         "usagesDigest": "/Te4HYVZwpyUXHBJQe+fY+l2ttN3dDROam8OC3QPjPc=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
