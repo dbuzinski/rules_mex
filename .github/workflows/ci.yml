@@ -1,4 +1,4 @@
-name: Smoke Tests
+name: Test Rule
 on: [push]
 jobs:
   lint:
@@ -46,4 +46,4 @@ jobs:
       - name: Verify MEX function in MATLAB
         uses: matlab-actions/run-command@v3
         with:
-          command: cd bazel-bin/tests; greetings
+          command: cd bazel-bin/examples; greetings
