@@ -74,7 +74,6 @@ def _matlab_configure_impl(repository_ctx):
             },
         )
 
-
         repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
             "%{name}": "local",
             "%{matlab_root}": str(matlab_root),
@@ -82,7 +81,7 @@ def _matlab_configure_impl(repository_ctx):
             "%{arch}": arch,
             "%{mex_executable}": mex_exe,
             "%{mexext}": mexext,
-            "%{wrapper_ext}": wrapper_ext
+            "%{wrapper_ext}": wrapper_ext,
         }, executable = False)
     else:
         repository_ctx.file("BUILD", "# MATLAB toolchain autoconfiguration was disabled by BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN=1.")
