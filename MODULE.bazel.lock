@@ -205,7 +205,7 @@
   "moduleExtensions": {
     "//mex/matlab:extensions.bzl%matlab_configure_extension": {
       "general": {
-        "bzlTransitiveDigest": "fPtSgVExUdz5LJ6Zaasgvn2q37nxmsIzRCbcpFh40gw=",
+        "bzlTransitiveDigest": "B8LhfjU4lXKQQDzhDH6kipdYpxuMp1UBMufIIP60GJo=",
         "usagesDigest": "/Te4HYVZwpyUXHBJQe+fY+l2ttN3dDROam8OC3QPjPc=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_skylib bazel_skylib+"

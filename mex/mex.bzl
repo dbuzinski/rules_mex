@@ -1,5 +1,6 @@
 """This module defines the rule for building MEX functions."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@rules_cc//cc:action_names.bzl", "C_COMPILE_ACTION_NAME")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cpp_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
@@ -11,7 +12,6 @@ def _mex_function_impl(ctx):
     matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
 
     mexext = matlab_toolchain.mexext
-    mex_wrapper = matlab_toolchain.mex_wrapper
     output = ctx.attr.output
     if output:
         ext_start = output.rfind(".")
@@ -22,7 +22,7 @@ def _mex_function_impl(ctx):
         out = ctx.actions.declare_file(output)
     else:
         src = ctx.files.srcs[0]
-        name = src.basename[:-len(src.extension) - 1] if src.extension else src.basename
+        name, _ = paths.split_extension(src.basename)
         output = name + mexext
         out = ctx.actions.declare_file(output)
 
@@ -59,12 +59,19 @@ def _mex_function_impl(ctx):
         env = {"BAZEL_MEX_CC_PATH": c_compiler_path}
         env.update(cc_env)
 
-    # TODO fix inputs. cc_toolchain.all_files? matlab_toolchain.all_files?
     ctx.actions.run(
-        inputs = ctx.files.srcs + [mex_wrapper],
+        inputs = depset(
+            direct = ctx.files.srcs,
+            transitive = [
+                cc_toolchain.all_files,
+                matlab_toolchain.all_files,
+            ]
+        ),
         outputs = [out],
-        executable = mex_wrapper,
+        executable = matlab_toolchain.mex_wrapper,
         env = env,
+        # Include user specified options before -outdir and -output because
+        # last specified win if specified twice.
         arguments = [f.path for f in ctx.files.srcs] + ctx.attr.options + [
             "-outdir",
             out.dirname,

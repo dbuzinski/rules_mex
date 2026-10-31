@@ -8,6 +8,11 @@ filegroup(
     srcs = ["mex_wrapper%{wrapper_ext}"],
 )
 
+filegroup(
+    name = "all_files",
+    srcs = [":mex_wrapper", %{supplementary_files}],
+)
+
 matlab_toolchain(
     name = "matlab-%{name}",
     matlab_root = "%{matlab_root}",
@@ -16,6 +21,7 @@ matlab_toolchain(
     mex_executable = "%{mex_executable}",
     mexext = "%{mexext}",
     mex_wrapper = ":mex_wrapper",
+    all_files = ":all_files",
 )
 
 

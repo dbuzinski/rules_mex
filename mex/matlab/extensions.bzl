@@ -27,10 +27,6 @@ def _get_arch(repository_ctx):
         return "win64"
     fail("Unsupported Platform: " + os_name + " " + arch)
 
-def _which(repository_ctx, cmd, default = None):
-    result = repository_ctx.which(cmd)
-    return default if result == None else str(result)
-
 def _should_disable_toolchain(repository_ctx):
     env = repository_ctx.os.environ
     if env.get("BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN") == "1":
@@ -56,15 +52,15 @@ def _matlab_configure_impl(repository_ctx):
             matlab_exe = str(matlab_exe)
             mex_exe = str(mex_exe)
         else:
-            mex_script = "mex"
-            if arch == "win64":
-                mex_script = mex_script + ".bat"
-            matlab_exe = _which(repository_ctx, "matlab")
-            mex_exe = _which(repository_ctx, mex_script)
-
-            if not matlab_exe or not mex_exe:
+            matlab_exe = repository_ctx.which("matlab")
+            if not matlab_exe:
                 fail("Unable to find MATLAB toolchain.")
+            # Follow symlinks to find real matlabroot
+            matlab_exe = str(matlab_exe.realpath)
             matlab_root = paths.dirname(paths.dirname(matlab_exe))
+            mex_exe = paths.join(matlab_root, "bin", "mex")
+            if arch == "win64":
+                mex_exe = paths.replace_extension(mex_exe, ".bat")
 
         repository_ctx.template(
             "mex_wrapper" + wrapper_ext,
@@ -74,6 +70,21 @@ def _matlab_configure_impl(repository_ctx):
             },
         )
 
+        # Additional files to track in order to detect changes to installed products or versions
+        # Use it if available but don't fail otherwise
+        supplementary_list = []
+        supplementary_files = ""
+        installedProductData = repository_ctx.path(paths.join(matlab_root, "appdata", "installedProductData.json"))
+        if installedProductData.exists:
+            repository_ctx.symlink(installedProductData, "installedProductData.json")
+            supplementary_list.append("installedProductData.json")
+        versionInfo = repository_ctx.path(paths.join(matlab_root, "VersionInfo.xml"))
+        if versionInfo.exists:
+            repository_ctx.symlink(versionInfo, "VersionInfo.xml")
+            supplementary_list.append("VersionInfo.xml")
+        if supplementary_list:
+           supplementary_files = "\"" + "\", \"".join(supplementary_list) + "\""
+
         repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
             "%{name}": "local",
             "%{matlab_root}": str(matlab_root),
@@ -82,6 +93,7 @@ def _matlab_configure_impl(repository_ctx):
             "%{mex_executable}": mex_exe,
             "%{mexext}": mexext,
             "%{wrapper_ext}": wrapper_ext,
+            "%{supplementary_files}": supplementary_files,
         }, executable = False)
     else:
         repository_ctx.file("BUILD", "# MATLAB toolchain autoconfiguration was disabled by BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN=1.")
