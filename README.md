@@ -5,6 +5,7 @@ This rule compiles C/C++ code into a [MEX file](https://www.mathworks.com/help/m
 ## Getting Started
 
 The following are required to use this rule:
+
 - Bazel 7 or later using [bzlmod](https://bazel.build/external/overview#bzlmod)
 - A MATLAB installation
 - A supported C/C++ compiler for your OS
@@ -28,16 +29,18 @@ This rule builds on the C++ toolchain defined in `rules_cc`. You must use a [sup
 On Windows, the `mex` command sometimes finds different compilers than the one provided by the C++ toolchain. If this happens, you can set the `MW_MINGW64_LOC` environment variable to the MinGW root folder for MinGW or the `PROGRAMFILES(X86)` or `PROGRAMFILES` environment variables for Microsoft Visual C++. See [ci.yml](https://github.com/dbuzinski/rules_mex/blob/main/.github/workflows/ci.yml) for example usage of these variables.
 
 ### Parameters
-| Name | Type | Description | Default | Required |
-| ---------- | -----| ------ | ------- | -------- |
-| `name`     | string |A unique name for this target. | | Yes |
-| `srcs`     | label | A list of C/C++ source files to compile. | | Yes |
-| `output`   | string | The name of the created MEX file. The rule always creates a file with the correct `mexext` for your system. | The base name of first file in srcs | No |
-| `options`  | string list | Build options to pass to the `mex` command. See [MEX documentation](https://www.mathworks.com/help/matlab/ref/mex.html#btw17rw-1-option1optionN) for a full list of supported options. | `[]` | No |
+
+| Name      | Type        | Description                                                                                                                                                                            | Default                             | Required |
+| --------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------- |
+| `name`    | string      | A unique name for this target.                                                                                                                                                         |                                     | Yes      |
+| `srcs`    | label       | A list of C/C++ source files to compile.                                                                                                                                               |                                     | Yes      |
+| `output`  | string      | The name of the created MEX file. The rule always creates a file with the correct `mexext` for your system.                                                                            | The base name of first file in srcs | No       |
+| `options` | string list | Build options to pass to the `mex` command. See [MEX documentation](https://www.mathworks.com/help/matlab/ref/mex.html#btw17rw-1-option1optionN) for a full list of supported options. | `[]`                                | No       |
 
 ## Notes
 
 For any feature requests or bugs, please [create an issue](https://github.com/dbuzinski/rules_mex/issues/new/choose). The following are things I'm considering as next steps:
+
 - MATLAB toolchain not hermetic and not documented.
 - A MATLAB toolchain included but might be worth separating from this repository for use in other rules.
 - Detecting supported compilers on Windows is a little janky at the moment.
