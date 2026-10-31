@@ -39,12 +39,12 @@ On Windows, the `mex` command sometimes finds a different compiler than the one 
 
 ### Parameters
 
-| Name      | Type        | Description                                                                                                                                                                            | Default                             | Required |
-| --------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------- |
-| `name`    | string      | A unique name for this target.                                                                                                                                                         |                                     | Yes      |
-| `srcs`    | label list | A list of C/C++ source files to compile.                                                                                                                                               |                                     | Yes      |
+| Name      | Type        | Description                                                                                                                                                                            | Default                                   | Required |
+| --------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------- |
+| `name`    | string      | A unique name for this target.                                                                                                                                                         |                                           | Yes      |
+| `srcs`    | label list  | A list of C/C++ source files to compile.                                                                                                                                               |                                           | Yes      |
 | `output`  | string      | The name of the created MEX file. The rule always creates a file with the correct `mexext` for your system.                                                                            | The base name of the first file in `srcs` | No       |
-| `options` | string list | Build options to pass to the `mex` command. See [MEX documentation](https://www.mathworks.com/help/matlab/ref/mex.html#btw17rw-1-option1optionN) for a full list of supported options. | `[]`                                | No       |
+| `options` | string list | Build options to pass to the `mex` command. See [MEX documentation](https://www.mathworks.com/help/matlab/ref/mex.html#btw17rw-1-option1optionN) for a full list of supported options. | `[]`                                      | No       |
 
 ## Notes
 
