@@ -65,7 +65,7 @@ def _mex_function_impl(ctx):
             transitive = [
                 cc_toolchain.all_files,
                 matlab_toolchain.all_files,
-            ]
+            ],
         ),
         outputs = [out],
         executable = matlab_toolchain.mex_wrapper,

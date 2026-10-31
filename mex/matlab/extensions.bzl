@@ -55,6 +55,7 @@ def _matlab_configure_impl(repository_ctx):
             matlab_exe = repository_ctx.which("matlab")
             if not matlab_exe:
                 fail("Unable to find MATLAB toolchain.")
+
             # Follow symlinks to find real matlabroot
             matlab_exe = str(matlab_exe.realpath)
             matlab_root = paths.dirname(paths.dirname(matlab_exe))
@@ -74,16 +75,16 @@ def _matlab_configure_impl(repository_ctx):
         # Use it if available but don't fail otherwise
         supplementary_list = []
         supplementary_files = ""
-        installedProductData = repository_ctx.path(paths.join(matlab_root, "appdata", "installedProductData.json"))
-        if installedProductData.exists:
-            repository_ctx.symlink(installedProductData, "installedProductData.json")
+        installed_product_data = repository_ctx.path(paths.join(matlab_root, "appdata", "installedProductData.json"))
+        if installed_product_data.exists:
+            repository_ctx.symlink(installed_product_data, "installedProductData.json")
             supplementary_list.append("installedProductData.json")
-        versionInfo = repository_ctx.path(paths.join(matlab_root, "VersionInfo.xml"))
-        if versionInfo.exists:
-            repository_ctx.symlink(versionInfo, "VersionInfo.xml")
+        version_info = repository_ctx.path(paths.join(matlab_root, "VersionInfo.xml"))
+        if version_info.exists:
+            repository_ctx.symlink(version_info, "VersionInfo.xml")
             supplementary_list.append("VersionInfo.xml")
         if supplementary_list:
-           supplementary_files = "\"" + "\", \"".join(supplementary_list) + "\""
+            supplementary_files = "\"" + "\", \"".join(supplementary_list) + "\""
 
         repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
             "%{name}": "local",
