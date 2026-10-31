@@ -3,6 +3,9 @@ toolchain_type(
     visibility = ["//visibility:public"],
 )
 
+# TODO: are these needed?
 exports_files([
     "BUILD.tpl",
+    "mex_wrapper.bat.tpl",
+    "mex_wrapper.sh.tpl ",
 ])

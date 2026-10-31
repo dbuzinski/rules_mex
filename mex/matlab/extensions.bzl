@@ -4,9 +4,16 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 
 _MEXEXT = {
     "glnxa64": ".mexa64",
-    "win64": ".mexw64",
     "maca64": ".mexmaca64",
     "maci64": ".mexmaci64",
+    "win64": ".mexw64",
+}
+
+_WRAPPER_EXT = {
+    "glnxa64": ".sh",
+    "maca64": ".sh",
+    "maci64": ".sh",
+    "win64": ".bat",
 }
 
 def _get_arch(repository_ctx):
@@ -34,7 +41,12 @@ def _matlab_configure_impl(repository_ctx):
     if not _should_disable_toolchain(repository_ctx):
         arch = _get_arch(repository_ctx)
         mexext = _MEXEXT[arch]
+        wrapper_ext = _WRAPPER_EXT[arch]
         matlab_root = repository_ctx.getenv("MATLAB_ROOT")
+        if arch == "win64":
+            mex_wrapper_tpl = repository_ctx.attr._windows_mex_wrapper
+        else:
+            mex_wrapper_tpl = repository_ctx.attr._unix_mex_wrapper
 
         if matlab_root:
             matlab_exe = paths.join(matlab_root, "bin", "matlab")
@@ -54,6 +66,15 @@ def _matlab_configure_impl(repository_ctx):
                 fail("Unable to find MATLAB toolchain.")
             matlab_root = paths.dirname(paths.dirname(matlab_exe))
 
+        repository_ctx.template(
+            "mex_wrapper" + wrapper_ext,
+            mex_wrapper_tpl,
+            substitutions = {
+                "%{mex_exe}": mex_exe,
+            },
+        )
+
+
         repository_ctx.template("BUILD.bazel", repository_ctx.attr._build_tpl, {
             "%{name}": "local",
             "%{matlab_root}": str(matlab_root),
@@ -61,6 +82,7 @@ def _matlab_configure_impl(repository_ctx):
             "%{arch}": arch,
             "%{mex_executable}": mex_exe,
             "%{mexext}": mexext,
+            "%{wrapper_ext}": wrapper_ext
         }, executable = False)
     else:
         repository_ctx.file("BUILD", "# MATLAB toolchain autoconfiguration was disabled by BAZEL_DO_NOT_DETECT_MATLAB_TOOLCHAIN=1.")
@@ -70,7 +92,11 @@ matlab_configure = repository_rule(
     environ = ["MATLAB_ROOT", "PATH"],
     local = True,
     configure = True,
-    attrs = {"_build_tpl": attr.label(default = Label("//mex/matlab:BUILD.tpl"))},
+    attrs = {
+        "_build_tpl": attr.label(default = Label("//mex/matlab:BUILD.tpl")),
+        "_unix_mex_wrapper": attr.label(default = Label("//mex/matlab:mex_wrapper.sh.tpl")),
+        "_windows_mex_wrapper": attr.label(default = Label("//mex/matlab:mex_wrapper.bat.tpl")),
+    },
 )
 
 def _matlab_configure_extension_impl(_):

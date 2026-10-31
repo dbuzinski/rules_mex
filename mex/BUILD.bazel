@@ -3,17 +3,3 @@ package(default_visibility = ["//visibility:public"])
 exports_files([
     "mex.bzl",
 ])
-
-filegroup(
-    name = "mex_wrapper_tpl_unix",
-    srcs = [
-        "mex_wrapper.sh.tpl",
-    ],
-)
-
-filegroup(
-    name = "mex_wrapper_tpl_windows",
-    srcs = [
-        "mex_wrapper.bat.tpl",
-    ],
-)

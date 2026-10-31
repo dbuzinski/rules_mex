@@ -7,6 +7,7 @@ def _matlab_toolchain_impl(ctx):
         arch = ctx.attr.arch,
         mex_executable = ctx.attr.mex_executable,
         mexext = ctx.attr.mexext,
+        mex_wrapper = ctx.file.mex_wrapper,
     )
     return [toolchain_info]
 
@@ -18,5 +19,10 @@ matlab_toolchain = rule(
         "arch": attr.string(),
         "mex_executable": attr.string(),
         "mexext": attr.string(),
+        "mex_wrapper": attr.label(
+            allow_single_file = True,
+            cfg = "exec",
+            mandatory = True,
+        ),
     },
 )

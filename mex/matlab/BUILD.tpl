@@ -3,6 +3,11 @@ load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "mex_wrapper",
+    srcs = ["mex_wrapper%{wrapper_ext}"],
+)
+
 matlab_toolchain(
     name = "matlab-%{name}",
     matlab_root = "%{matlab_root}",
@@ -10,6 +15,7 @@ matlab_toolchain(
     arch = "%{arch}",
     mex_executable = "%{mex_executable}",
     mexext = "%{mexext}",
+    mex_wrapper = ":mex_wrapper",
 )
 
 

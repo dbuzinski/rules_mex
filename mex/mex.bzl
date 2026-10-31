@@ -11,6 +11,7 @@ def _mex_function_impl(ctx):
     matlab_toolchain = ctx.toolchains[_MATLAB_TC_TYPE]
 
     mexext = matlab_toolchain.mexext
+    mex_wrapper = matlab_toolchain.mex_wrapper
     output = ctx.attr.output
     if output:
         ext_start = output.rfind(".")
@@ -48,9 +49,6 @@ def _mex_function_impl(ctx):
     )
 
     if matlab_toolchain.arch == "win64":
-        mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_windows
-        mex_wrapper = ctx.actions.declare_file("mex_wrapper.bat")
-
         # Pass env vars to help mex locate compiler
         _COMPILER_LOC_VARS = ["MW_MINGW64_LOC", "PROGRAMFILES(X86)", "PROGRAMFILES"]
 
@@ -58,35 +56,21 @@ def _mex_function_impl(ctx):
         env = {e: shell_env[e] for e in _COMPILER_LOC_VARS if e in shell_env}
         env.update(cc_env)
     else:
-        mex_wrapper_tpl = ctx.file._mex_wrapper_tpl_unix
-        mex_wrapper = ctx.actions.declare_file("mex_wrapper.sh")
-        env = cc_env
+        env = {"BAZEL_MEX_CC_PATH": c_compiler_path}
+        env.update(cc_env)
 
-    # TODO: Probably shouldn't be an output that actually goes in bazel-bin
-    ctx.actions.expand_template(
-        template = mex_wrapper_tpl,
-        output = mex_wrapper,
-        substitutions = {
-            "%{mex_exe}": matlab_toolchain.mex_executable,
-            "%{cc_path}": c_compiler_path,
-        },
-        is_executable = True,
-    )
-
-    # TODO reconsider use of -outdir. currently using as easiest to allow
-    # sandboxed builds due to tmp file creation
     # TODO fix inputs. cc_toolchain.all_files? matlab_toolchain.all_files?
     ctx.actions.run(
         inputs = ctx.files.srcs + [mex_wrapper],
         outputs = [out],
-        executable = mex_wrapper.path,
+        executable = mex_wrapper,
         env = env,
-        arguments = [f.path for f in ctx.files.srcs] + [
+        arguments = [f.path for f in ctx.files.srcs] + ctx.attr.options + [
             "-outdir",
             out.dirname,
             "-output",
             output,
-        ] + ctx.attr.options,
+        ],
     )
     return [DefaultInfo(files = depset([out]))]
 
@@ -96,14 +80,6 @@ mex_function = rule(
         "srcs": attr.label_list(allow_files = True),
         "output": attr.string(),
         "options": attr.string_list(),
-        "_mex_wrapper_tpl_unix": attr.label(
-            default = ":mex_wrapper_tpl_unix",
-            allow_single_file = True,
-        ),
-        "_mex_wrapper_tpl_windows": attr.label(
-            default = ":mex_wrapper_tpl_windows",
-            allow_single_file = True,
-        ),
     } | CC_TOOLCHAIN_ATTRS,
     toolchains = use_cc_toolchain() + [_MATLAB_TC_TYPE],
     fragments = ["cpp"],
